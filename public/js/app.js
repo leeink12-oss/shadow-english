@@ -12,6 +12,7 @@ import { Library } from './library.js';
 import { Speaking } from './speaking.js';
 import { Records } from './records.js';
 import { VOICE_PROFILES, setVoiceProfile, setSpeechRate } from './tts.js';
+import { saveVideoFile, loadVideoFile, removeVideoFile } from './video-cache.js';
 
 const MODE_GAP = {
   bilingual: 'none',
@@ -78,7 +79,14 @@ async function init() {
         busy.hide();
         if (!res.course) throw new Error('课程不存在');
         await openCourse(res.course, null);
-        toast(videoName ? `请选择视频文件：${videoName}` : `继续学习「${title || res.course.title}」`, 3200);
+        toast(
+          state.videoUrl
+            ? `已恢复本地视频：${videoName || res.course.videoName || '课程视频'}`
+            : videoName
+              ? `请选择视频文件：${videoName}`
+              : `继续学习「${title || res.course.title}」`,
+          3200
+        );
       } catch (e) {
         busy.hide();
         toast(`打开课程失败：${e.message}`, 3600);
@@ -615,7 +623,14 @@ function renderCourseList(items) {
         busy.hide();
         if (!res.course) throw new Error('课程不存在');
         await openCourse(res.course, null);
-        toast(c.videoName ? `请选择视频文件：${c.videoName}` : '请选择这个课程对应的视频文件', 3600);
+        toast(
+          state.videoUrl
+            ? `已恢复本地视频：${c.videoName || '课程视频'}`
+            : c.videoName
+              ? `请选择视频文件：${c.videoName}`
+              : '请选择这个课程对应的视频文件',
+          3600
+        );
       } catch (e) {
         busy.hide();
         toast(`打开失败：${e.message}`);
@@ -679,11 +694,19 @@ async function openCourse(course, videoFile) {
   // 视频来源：新选的 / 同一课程沿用旧的 / 否则清空等用户选
   if (videoFile) {
     attachVideo(videoFile);
-  } else if (!(prevId === course.id && state.videoUrl)) {
-    clearVideo();
-  } else {
+  } else if (prevId === course.id && state.videoUrl) {
     $('#videoPlaceholder').hidden = true;
     $('#videoShell').classList.add('has-video');
+  } else {
+    clearVideo();
+    if (course.videoName) {
+      try {
+        const cached = await loadVideoFile(course.videoName);
+        if (cached) attachVideo(cached);
+      } catch {
+        // 缓存不可用时保持“选择视频文件”占位，不影响课程内容。
+      }
+    }
   }
 
   // 回到上次播放位置
@@ -773,6 +796,7 @@ function attachVideo(file) {
     { once: true }
   );
   video.addEventListener('error', () => toast('这个视频浏览器可能不支持，试试转成 mp4（H.264）', 4000), { once: true });
+  saveVideoFile(file.name || state.course?.videoName, file).catch(() => {});
 }
 
 function updateProgress(t) {
@@ -1169,7 +1193,9 @@ function bindSheets() {
   $('#btnDeleteCourse').addEventListener('click', async () => {
     if (!state.course) return;
     if (!confirm(`删除课程「${state.course.title}」？`)) return;
+    const videoName = state.course.videoName;
     await api.delJSON(`/api/courses/${encodeURIComponent(state.course.id)}`);
+    if (videoName) removeVideoFile(videoName).catch(() => {});
     $('#maskSettings').hidden = true;
     toast('课程已删除');
     backHome();
