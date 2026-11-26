@@ -2,6 +2,8 @@
 
 > 用真实英语视频练听力，再把学到的表达真正说出口。
 
+GitHub 仓库：<https://github.com/leeink12-oss/shadow-english>
+
 影读英语是一个在电脑本地运行的英语口语学习工具。它可以把你喜欢的视频转换为逐句练习，也可以不导入任何视频，直接从真实生活、职场、销售和外贸场景开始开口对话。
 
 视频与录音留在本机；语音识别使用本地 faster-whisper；翻译、教学分析和对话使用你自己的 DeepSeek API Key。
@@ -121,7 +123,7 @@ AI 会从整段视频中挑出约 6–10 个真正值得迁移的表达，并为
 ### 方式二：Git 克隆
 
 ```bash
-git clone <本仓库地址>
+git clone https://github.com/leeink12-oss/shadow-english.git
 cd shadow-english
 ```
 
