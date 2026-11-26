@@ -5,6 +5,7 @@ import * as api from './api.js';
 import { AnalysisView } from './analysis.js';
 import { Mic, transcribeClip, canRecord, recordBlockedHint } from './voice.js';
 import { speak, stopSpeak } from './practice.js';
+import { warmAsr } from './asr.js';
 
 /* ══════════════ 场景库 ══════════════ */
 const CATS = [
@@ -117,6 +118,7 @@ export class Speaking {
     this.autoSpeak = true; // 自动朗读对方
     this.failCount = 0;
     this.from = 'welcome'; // 从哪进来，返回就回哪
+    this.pickerFilter = 'all';
 
     // 切走标签页时把麦克风关掉，别让它一直听
     document.addEventListener('visibilitychange', () => {
@@ -177,25 +179,59 @@ export class Speaking {
     this.stopAll();
     const body = $('#speakBody');
     body.replaceChildren();
-    $('#speakTitle').textContent = '口语实战';
+    $('#speakTitle').textContent = '场景库';
+    $('#btnSpeakNew').hidden = true;
 
     const wrap = el('div', { class: 'sp-pick' });
-    wrap.append(
-      el('p', {
-        class: 'sp-lead',
-        text: '选一个场景，对方会先开口。你只要回话——不知道怎么接就直说，对方会帮你把话接下去。',
-      })
-    );
 
-    for (const cat of CATS) {
-      const sec = el('div', { class: 'sp-cat' });
+    const hero = el('section', { class: 'scene-library-hero' });
+    const heroCopy = el('div', { class: 'scene-library-copy' });
+    heroCopy.append(
+      el('span', { class: 'scene-library-kicker', text: 'SCENE LIBRARY' }),
+      el('h2', { text: '选一个真实场景，直接开口。' }),
+      el('p', { text: '对方会先说话，你只要接住。没有标准答案，也不用背模板。' })
+    );
+    const stats = el('div', { class: 'scene-library-stats' });
+    stats.append(
+      el('div', {}, el('b', { text: String(CATS.length) }), el('span', { text: '训练分类' })),
+      el('div', {}, el('b', { text: String(ALL.length) }), el('span', { text: '真实场景' })),
+      el('div', {}, el('b', { text: '本地' }), el('span', { text: '语音识别' }))
+    );
+    hero.append(heroCopy, stats);
+    wrap.append(hero);
+
+    const filters = el('nav', { class: 'scene-library-filters', 'aria-label': '场景分类' });
+    const addFilter = (id, label) => {
+      const btn = el('button', {
+        class: id === this.pickerFilter ? 'active' : '',
+        text: label,
+      });
+      btn.addEventListener('click', () => {
+        this.pickerFilter = id;
+        this.renderPicker();
+      });
+      filters.append(btn);
+    };
+    addFilter('all', '全部');
+    for (const cat of CATS) addFilter(cat.id, cat.name);
+    wrap.append(filters);
+
+    const visibleCats = this.pickerFilter === 'all' ? CATS : CATS.filter((cat) => cat.id === this.pickerFilter);
+    for (const cat of visibleCats) {
+      const sec = el('div', { class: `sp-cat cat-${cat.id}` });
       const head = el('div', { class: 'sp-cat-head' });
-      head.append(el('span', { class: 'sp-ico', text: cat.icon }), el('b', { text: cat.name }), el('em', { text: cat.desc }));
+      head.append(
+        el('span', { class: 'sp-ico', text: cat.icon }),
+        el('div', {}, el('b', { text: cat.name }), el('em', { text: cat.desc })),
+        el('span', { class: 'sp-count', text: `${cat.items.length} 个场景` })
+      );
       sec.append(head);
       const grid = el('div', { class: 'sp-grid' });
-      for (const it of cat.items) {
+      for (const [index, it] of cat.items.entries()) {
         const b = el('button', { class: 'sp-scene-btn' });
-        b.append(el('b', { text: it.title }), el('span', { text: it.goal }));
+        const top = el('span', { class: 'sp-scene-top' });
+        top.append(el('em', { text: String(index + 1).padStart(2, '0') }), el('i', { text: '开始 ›' }));
+        b.append(top, el('b', { text: it.title }), el('span', { class: 'sp-scene-goal', text: it.goal }));
         b.addEventListener('click', () => this.start({ ...it, cat: cat.id, catName: cat.name }));
         grid.append(b);
       }
@@ -204,9 +240,13 @@ export class Speaking {
     }
 
     if (this.history.length) {
-      const sec = el('div', { class: 'sp-cat' });
+      const sec = el('div', { class: 'sp-cat scene-history' });
       const head = el('div', { class: 'sp-cat-head' });
-      head.append(el('span', { class: 'sp-ico', text: '🕘' }), el('b', { text: '练过的' }), el('em', { text: '点开看当时的复盘' }));
+      head.append(
+        el('span', { class: 'sp-ico', text: '↺' }),
+        el('div', {}, el('b', { text: '最近练过' }), el('em', { text: '点开可以查看当时的完整复盘' })),
+        el('span', { class: 'sp-count', text: `${this.history.length} 次` })
+      );
       sec.append(head);
       const list = el('div', { class: 'sp-hist' });
       for (const h of this.history.slice(0, 6)) {
@@ -240,6 +280,7 @@ export class Speaking {
 
   start(sc) {
     this.stopAll();
+    warmAsr().catch(() => {});
     this.readonly = false;
     this.ended = false;
     this.scenario = sc;
@@ -255,6 +296,7 @@ export class Speaking {
   renderChat() {
     const body = $('#speakBody');
     body.replaceChildren();
+    $('#btnSpeakNew').hidden = false;
     const sc = this.scenario;
     $('#speakTitle').textContent = sc.title || '口语实战';
 
@@ -467,7 +509,7 @@ export class Speaking {
           if (mic) mic.style.setProperty('--lv', String(v));
         },
         onAutoStop: () => this.finishUtterance(),
-        silenceMs: 1500,
+        silenceMs: 1100,
         minSpeechMs: 300,
         maxMs: 30000,
       });
@@ -483,7 +525,7 @@ export class Speaking {
     if (this.phase !== 'listening') return;
     this.phase = 'thinking';
     this.paintPhase();
-    this.updateStatus('正在听你说的…');
+      this.updateStatus('正在识别…');
     const blob = await this.mic.stop();
     if (!blob) return this.noSpeech('没听到声音');
 

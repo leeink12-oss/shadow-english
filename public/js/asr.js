@@ -4,6 +4,7 @@ import { getJSON, delJSON } from './api.js';
 import { sleep } from './util.js';
 
 export const getAsrEnv = (force = false) => getJSON(`/api/asr/env${force ? '?force=1' : ''}`);
+export const warmAsr = () => getJSON('/api/asr/warm');
 
 /**
  * 把视频原始字节 POST 给本地服务。

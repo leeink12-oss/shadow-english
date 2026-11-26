@@ -579,7 +579,7 @@ export class SubtitleView {
     this.shadowHint.textContent = '正在听你说的…';
     this.shadowBtn.disabled = true;
     try {
-      const heard = await transcribeClip(blob, { lang: 'en' });
+      const heard = await transcribeClip(blob, { lang: 'en', words: true });
       const res = scoreShadow(s.en, heard);
       if (!res) return;
       this.renderShadowScore(s, res, heard);

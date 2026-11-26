@@ -19,9 +19,9 @@ const readline = require('node:readline');
 // 画质/体积取舍：模型越大越准也越慢，首次下载体积见注释
 const MODELS = {
   tiny: { label: '极速', size: '75 MB', hint: '适合试水，准确率一般' },
-  base: { label: '快速', size: '145 MB', hint: '英文口播勉强可用' },
-  small: { label: '均衡', size: '466 MB', hint: '推荐起点，日常够用' },
-  medium: { label: '精准', size: '1.5 GB', hint: '口音重、术语多的内容用它' },
+  base: { label: '快速', size: '145 MB', hint: 'CPU 推荐，普通英文口播速度最快' },
+  small: { label: '均衡', size: '466 MB', hint: '准确度与速度平衡' },
+  medium: { label: '精准', size: '1.5 GB', hint: '口音或术语较多时使用；CPU 上较慢' },
   'large-v3': { label: '最准', size: '3.1 GB', hint: '16G 显存跑得动，最慢最准' },
 };
 
@@ -51,7 +51,8 @@ module.exports = function createAsrService({ root, dataDir, sendJSON }) {
   function probePython() {
     return new Promise((resolve) => {
       if (!fs.existsSync(SCRIPT)) return resolve({ ok: false, reason: '识别脚本缺失（asr/transcribe.py）' });
-      const child = spawn(python(), usingVenv() ? ['-c', 'import faster_whisper;print("ok")'] : ['-c', 'import faster_whisper;print("ok")'], {
+      const probe = 'import faster_whisper, ctranslate2; print("ok", ctranslate2.get_cuda_device_count())';
+      const child = spawn(python(), ['-c', probe], {
         windowsHide: true,
         env: { ...process.env, PYTHONIOENCODING: 'utf-8' },
       });
@@ -66,7 +67,10 @@ module.exports = function createAsrService({ root, dataDir, sendJSON }) {
       });
       child.on('close', (code) => {
         clearTimeout(timer);
-        if (code === 0 && out.includes('ok')) return resolve({ ok: true });
+        if (code === 0 && /ok\s+(\d+)/.test(out)) {
+          const cuda = Number(out.match(/ok\s+(\d+)/)[1]) || 0;
+          return resolve({ ok: true, cuda });
+        }
         const tail = (err || out).trim().split('\n').filter(Boolean).slice(-2).join(' ');
         resolve({ ok: false, reason: tail || `Python 退出码 ${code}` });
       });
@@ -95,13 +99,17 @@ module.exports = function createAsrService({ root, dataDir, sendJSON }) {
   async function env(force = false) {
     if (envCache && !force && Date.now() - envCache.at < 60000) return envCache.value;
     const py = await probePython();
+    const cuda = Number(py.cuda) || 0;
+    const defaultModel = cuda > 0 ? 'medium' : 'base';
     const value = {
       ready: py.ok,
       reason: py.ok ? '' : py.reason || '未就绪',
       venv: usingVenv(),
       models: listDownloadedModels(),
       options: MODELS,
-      defaultModel: 'medium',
+      defaultModel,
+      device: cuda > 0 ? 'cuda' : 'cpu',
+      cudaDevices: cuda,
     };
     envCache = { at: Date.now(), value };
     return value;
@@ -155,12 +163,23 @@ module.exports = function createAsrService({ root, dataDir, sendJSON }) {
       } else if (ev.type === 'ready') {
         job.device = ev.device;
         job.stage = 'transcribe';
+      } else if (ev.type === 'duration') {
+        job.duration = Number(ev.duration) || 0;
+      } else if (ev.type === 'progress') {
+        job.percent = Math.max(0, Math.min(99, Number(ev.percent) || 0));
+        job.processed = Number(ev.processed) || 0;
+        job.duration = Number(ev.duration) || job.duration || 0;
       } else if (ev.type === 'segment') {
         job.segments.push({ start: ev.start, end: ev.end, text: ev.text, en: ev.text, zh: '' });
-        job.msg = `已识别 ${job.segments.length} 句…`;
+        job.percent = Math.max(job.percent || 0, Math.min(99, Number(ev.percent) || 0));
+        job.processed = Number(ev.processed) || job.processed || 0;
+        job.msg = job.percent
+          ? `已识别 ${job.segments.length} 句 · ${job.percent}%…`
+          : `已识别 ${job.segments.length} 句…`;
       } else if (ev.type === 'done') {
         job.lang = ev.lang || job.lang;
         job.elapsed = ev.elapsed;
+        job.percent = 100;
         job.device = ev.device || job.device;
       } else if (ev.type === 'error') {
         job.error = ev.msg;
@@ -203,11 +222,12 @@ module.exports = function createAsrService({ root, dataDir, sendJSON }) {
   let warm = null;
   let clipSeq = 0;
 
-  /** 短音频用哪个模型：优先已下载的最大模型，没有就 small */
+  /** 实时对话优先响应速度：固定使用 small，长视频仍可选择 medium。 */
   function clipModel() {
     const have = listDownloadedModels();
-    for (const m of ['medium', 'small', 'base', 'tiny']) if (have.includes(m)) return m;
-    return 'small';
+    if (have.includes('base')) return 'base';
+    if (have.includes('small')) return 'small';
+    return 'base';
   }
 
   function failAll(w, msg) {
@@ -338,7 +358,7 @@ module.exports = function createAsrService({ root, dataDir, sendJSON }) {
     return w;
   }
 
-  function runClip({ file, lang, model }) {
+  function runClip({ file, lang, model, words = false }) {
     const w = ensureWarm(model);
     return w.ready.then(
       () =>
@@ -352,7 +372,7 @@ module.exports = function createAsrService({ root, dataDir, sendJSON }) {
           timer.unref?.();
           w.pending.set(jobId, { resolve, reject, timer });
           try {
-            w.child.stdin.write(JSON.stringify({ id: jobId, file, lang }) + '\n');
+            w.child.stdin.write(JSON.stringify({ id: jobId, file, lang, words }) + '\n');
           } catch (e) {
             w.pending.delete(jobId);
             clearTimeout(timer);
@@ -403,7 +423,10 @@ module.exports = function createAsrService({ root, dataDir, sendJSON }) {
     model: job.model,
     lang: job.lang,
     count: job.segments.length,
-    elapsed: job.elapsed || 0,
+    percent: Math.max(0, Math.min(100, Number(job.percent) || 0)),
+    processed: Number(job.processed) || 0,
+    duration: Number(job.duration) || 0,
+    elapsed: job.elapsed || (job.startedAt ? Math.round((Date.now() - job.startedAt) / 1000) : 0),
     segments: job.segments,
   });
 
@@ -416,6 +439,20 @@ module.exports = function createAsrService({ root, dataDir, sendJSON }) {
       return sendJSON(res, 200, await env(url.searchParams.get('force') === '1'));
     }
 
+    // 进入口语场景时提前加载短音频模型，避免第一句话冷启动。
+    if (p === '/api/asr/warm' && req.method === 'GET') {
+      const info = await env();
+      if (!info.ready) return sendJSON(res, 503, { ok: false, error: `语音识别未就绪：${info.reason}` });
+      const model = url.searchParams.get('model') || clipModel();
+      if (!MODELS[model]) return sendJSON(res, 400, { ok: false, error: `不认识的模型：${model}` });
+      try {
+        const worker = await ensureWarm(model).ready;
+        return sendJSON(res, 200, { ok: true, model, device: worker.device || '' });
+      } catch (e) {
+        return sendJSON(res, 500, { ok: false, error: e.message });
+      }
+    }
+
     // 短音频识别：跟读评分、开口练、口语对话都走这里（原始音频字节）
     if (p === '/api/asr/clip' && req.method === 'POST') {
       const info = await env();
@@ -424,6 +461,7 @@ module.exports = function createAsrService({ root, dataDir, sendJSON }) {
       const model = url.searchParams.get('model') || clipModel();
       if (!MODELS[model]) return sendJSON(res, 400, { ok: false, error: `不认识的模型：${model}` });
       const lang = url.searchParams.get('lang') || 'en';
+      const words = url.searchParams.get('words') === '1';
 
       const declared = Number(req.headers['content-length'] || 0);
       if (declared > CLIP_MAX) return sendJSON(res, 413, { ok: false, error: '录音太大（上限 30MB）' });
@@ -439,7 +477,7 @@ module.exports = function createAsrService({ root, dataDir, sendJSON }) {
       }
 
       try {
-        const r = await runClip({ file, lang, model });
+        const r = await runClip({ file, lang, model, words });
         return sendJSON(res, 200, { ok: true, model, ...r });
       } catch (e) {
         await fsp.unlink(file).catch(() => {});
@@ -497,6 +535,9 @@ module.exports = function createAsrService({ root, dataDir, sendJSON }) {
         stage: 'load',
         msg: '正在加载模型…',
         segments: [],
+        percent: 0,
+        processed: 0,
+        duration: 0,
         startedAt: Date.now(),
       };
       jobs.set(id, job);

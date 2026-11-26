@@ -65,17 +65,16 @@ def load_model(name, device, compute):
     return m, device, compute, name
 
 
-def transcribe_one(model, path, lang):
+def transcribe_one(model, path, lang, need_words=False):
     started = time.time()
     segments, info = model.transcribe(
         path,
         language=None if lang in ("auto", "", None) else lang,
         task="transcribe",
-        beam_size=5,
-        vad_filter=True,  # 跳过静音，避免整段空白时冒出一句幻觉 "Thank you."
-        vad_parameters={"min_silence_duration_ms": 300},
+        beam_size=3 if need_words else 1,
+        vad_filter=False,  # 录音端已在说话结束后截断，短句无需再运行 VAD。
         condition_on_previous_text=False,
-        word_timestamps=True,
+        word_timestamps=need_words,
         no_speech_threshold=0.6,
         temperature=0,
     )
@@ -149,7 +148,12 @@ def main():
             continue
 
         try:
-            result = transcribe_one(model, path, job.get("lang") or "en")
+            result = transcribe_one(
+                model,
+                path,
+                job.get("lang") or "en",
+                need_words=bool(job.get("words")),
+            )
             emit({"id": jid, "type": "result", **result})
         except Exception as e:  # noqa: BLE001
             # 单句失败不能拖垮常驻进程，报错后继续接下一句

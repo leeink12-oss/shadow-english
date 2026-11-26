@@ -164,6 +164,19 @@ def ensure_model(name):
     return d
 
 
+def media_duration(path):
+    """读取媒体总时长，供长视频显示真实识别进度。"""
+    try:
+        import av
+
+        with av.open(path) as container:
+            if container.duration:
+                return max(0.0, float(container.duration) / 1000000.0)
+    except Exception:  # noqa: BLE001
+        pass
+    return 0.0
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--input", required=True, help="视频或音频文件路径")
@@ -202,28 +215,39 @@ def main():
 
     log(f"正在加载模型（{device}）…")
     try:
-        model = WhisperModel(local_dir, device=device, compute_type=compute)
+        kwargs = {"device": device, "compute_type": compute}
+        if device == "cpu":
+            kwargs["cpu_threads"] = min(8, os.cpu_count() or 1)
+        model = WhisperModel(local_dir, **kwargs)
     except Exception as e:  # noqa: BLE001
         if device != "cuda":
             raise
         short = str(e).split("\n")[0][:120]
         log(f"显卡加载失败，改用 CPU（{short}）")
         device, compute = "cpu", "int8"
-        model = WhisperModel(local_dir, device="cpu", compute_type="int8")
+        model = WhisperModel(
+            local_dir,
+            device="cpu",
+            compute_type="int8",
+            cpu_threads=min(8, os.cpu_count() or 1),
+        )
 
     emit({"type": "ready", "device": device, "model": args.model})
 
     language = None if args.lang in ("auto", "", None) else args.lang
     emitted = 0
+    duration = media_duration(args.input)
+    if duration:
+        emit({"type": "duration", "duration": round(duration, 2)})
 
     def stream(m):
         """逐条识别并输出，返回 info 对象"""
-        nonlocal emitted
+        nonlocal emitted, duration
         segs, info = m.transcribe(
             args.input,
             language=language,
             task="transcribe",
-            beam_size=5,
+            beam_size=5 if device == "cuda" else 2,
             vad_filter=True,  # 用 VAD 跳过静音，减少整段空白与循环幻觉
             vad_parameters={"min_silence_duration_ms": 400},
             condition_on_previous_text=False,
@@ -241,8 +265,12 @@ def main():
                     "start": round(float(seg.start), 3),
                     "end": round(float(seg.end), 3),
                     "text": text,
+                    "percent": min(99, round(float(seg.end) * 100 / duration)) if duration else 0,
+                    "processed": round(float(seg.end), 1),
                 }
             )
+        if duration:
+            emit({"type": "progress", "percent": 99, "processed": round(duration, 1), "duration": round(duration, 1)})
         return info
 
     log("正在识别语音…")
@@ -257,7 +285,12 @@ def main():
             emit({"type": "reset"})
             emitted = 0
         device, compute = "cpu", "int8"
-        model = WhisperModel(local_dir, device="cpu", compute_type="int8")
+        model = WhisperModel(
+            local_dir,
+            device="cpu",
+            compute_type="int8",
+            cpu_threads=min(8, os.cpu_count() or 1),
+        )
         emit({"type": "ready", "device": "cpu", "model": args.model})
         info = stream(model)
 

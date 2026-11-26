@@ -5,7 +5,7 @@ import { Player } from './player.js';
 import { SubtitleView } from './render.js';
 import { Vocab } from './vocab.js';
 import * as api from './api.js';
-import { getAsrEnv, uploadVideo, waitJob, cancelJob } from './asr.js';
+import { getAsrEnv, warmAsr, uploadVideo, waitJob, cancelJob } from './asr.js';
 import { speak } from './practice.js';
 import { AnalysisView } from './analysis.js';
 import { Library } from './library.js';
@@ -345,13 +345,13 @@ async function loadAsrEnv() {
     sel.append(
       el('option', {
         value: key,
-        text: `${v.label} · ${key}${downloaded ? ' ✓ 已下载' : ` · 需下载 ${v.size}`}`,
+        text: `${v.label} · ${key}${key === asrInfo.defaultModel ? ' · 推荐' : ''}${downloaded ? ' ✓ 已下载' : ` · 需下载 ${v.size}`}`,
       })
     );
   }
-  // 默认 medium：字幕准确性优先，显卡上速度完全够用
-  const preferred = 'medium';
-  sel.value = opts[preferred] ? preferred : asrInfo.defaultModel || 'small';
+  // CPU 使用轻量模型，检测到 CUDA 显卡时再默认使用 medium。
+  const preferred = asrInfo.defaultModel || 'base';
+  sel.value = opts[preferred] ? preferred : 'small';
 
   $('#asrEnv').textContent = asrInfo.ready ? '本地识别已就绪' : `不可用：${asrInfo.reason || '未知原因'}`;
   $('#asrEnv').classList.toggle('bad', !asrInfo.ready);
@@ -361,6 +361,8 @@ async function loadAsrEnv() {
     homeAsr.classList.toggle('bad', !asrInfo.ready);
   }
   $('#asrTip').textContent = asrTipFor(sel.value);
+  // 提前启动轻量实时识别进程，进入口语场景即可立即使用。
+  if (asrInfo.ready) warmAsr().catch(() => {});
 }
 
 function asrTipFor(model) {
@@ -368,13 +370,17 @@ function asrTipFor(model) {
   const downloaded = (asrInfo?.models || []).includes(model);
   const hint = v?.hint || '';
   const dl = downloaded ? '模型已下载，可直接用。' : `首次使用需下载 ${v?.size || ''}（一次性，之后完全离线）。`;
-  return `${hint}。${dl}识别在本机完成，视频不会上传到任何服务器。`;
+  const slow =
+    asrInfo?.device === 'cpu' && (model === 'medium' || model === 'large-v3')
+      ? '当前未检测到可用显卡，这个模型在 CPU 上会明显更慢。'
+      : '';
+  return `${hint}。${slow}${dl}识别在本机完成，视频不会上传到任何服务器。`;
 }
 
 /** 视频没有字幕时走这条路：上传 → 本地识别 → 翻译 → 建课 */
 async function buildCourseFromAsr() {
   const video = picked.video;
-  const model = $('#selModel').value || 'medium';
+  const model = $('#selModel').value || asrInfo?.defaultModel || 'base';
   if (!video) return;
   let jobId = null;
   try {
@@ -393,6 +399,16 @@ async function buildCourseFromAsr() {
       if (j.stage === 'download') {
         busy.text(j.msg);
         busy.progress(20 + (j.percent || 0) * 0.2);
+        return;
+      }
+      if (j.stage === 'transcribe' && ((Number(j.percent) || 0) > 0 || (Number(j.duration) || 0) > 0)) {
+        const pct = Math.max(0, Math.min(100, Number(j.percent) || 0));
+        const elapsed = Number(j.elapsed) || 0;
+        const eta = pct > 2 ? Math.max(0, Math.round((elapsed * (100 - pct)) / pct)) : 0;
+        const timeline = j.duration ? ` · ${fmtTime(j.processed || 0)} / ${fmtTime(j.duration)}` : '';
+        const etaText = eta ? ` · 约剩 ${fmtTime(eta)}` : '';
+        busy.text(`本地识别中 ${pct}%${timeline}${etaText}`);
+        busy.progress(42 + pct * 0.4);
         return;
       }
       if (j.msg && j.msg !== lastMsg) {

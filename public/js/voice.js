@@ -174,9 +174,10 @@ export class Mic {
 /* ═══════════════ 识别 ═══════════════ */
 
 /** 短音频 → { text, words:[{w,p,s,e}], duration } */
-export async function transcribeClip(blob, { lang = 'en', model = '' } = {}) {
+export async function transcribeClip(blob, { lang = 'en', model = '', words = false } = {}) {
   const qs = new URLSearchParams({ lang });
   if (model) qs.set('model', model);
+  if (words) qs.set('words', '1');
   const res = await fetch(`/api/asr/clip?${qs}`, {
     method: 'POST',
     headers: { 'Content-Type': blob.type || 'audio/webm' },
