@@ -1,0 +1,6 @@
+faster-whisper>=1.2,<2
+edge-tts>=7.3,<8
+
+# Optional NVIDIA acceleration. Safe to omit on CPU-only machines.
+nvidia-cublas-cu12
+nvidia-cudnn-cu12

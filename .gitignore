@@ -1,0 +1,30 @@
+# Local Python environments
+.venv/
+.python/
+__pycache__/
+*.py[cod]
+
+# Downloaded speech models and generated caches
+asr/models/*
+!asr/models/.gitkeep
+data/*
+!data/.gitkeep
+
+# Runtime files
+*.log
+*.part
+.DS_Store
+Thumbs.db
+
+# Local media used for testing
+*.mp4
+*.mkv
+*.mov
+*.avi
+*.webm
+*.mp3
+*.wav
+
+# Editor files
+.idea/
+.vscode/

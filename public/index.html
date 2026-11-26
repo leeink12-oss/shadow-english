@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<meta name="theme-color" content="#FAF7F1" />
+<title>影读英语 · Shadow English</title>
+<link rel="stylesheet" href="/css/style.css" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎧</text></svg>" />
+</head>
+<body>
+
+<!-- ══════════════════════ 首页 / 导入 ══════════════════════ -->
+<div id="welcome" class="welcome">
+  <aside class="home-sidebar" aria-label="主导航">
+    <div class="home-brand">
+      <div class="home-brand-mark" aria-hidden="true"><i></i></div>
+      <div>
+        <b>影读英语</b>
+        <span>SPEAK FROM SCREEN</span>
+      </div>
+    </div>
+
+    <div class="home-nav-label">学习空间</div>
+    <nav class="home-nav">
+      <button class="home-nav-item active" id="btnNavPractice">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2a3.1 3.1 0 013.1 3.1v5.4a3.1 3.1 0 11-6.2 0V6.3A3.1 3.1 0 0112 3.2z"/><path d="M18.4 11.2a6.4 6.4 0 01-12.8 0M12 17.6v3.2"/></svg>
+        <span>练口语</span>
+      </button>
+      <button class="home-nav-item" id="btnNavScenes">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M8 5V3.8M16 5V3.8M4 9h16"/></svg>
+        <span>场景库</span>
+      </button>
+      <button class="home-nav-item" id="btnGoLibrary">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.6h9.4A2.6 2.6 0 0117 7.2V20a1 1 0 01-1.5.9L12 18.7l-3.5 2.2A1 1 0 017 20V4.6z"/></svg>
+        <span>表达本 <em id="libCount">0</em></span>
+      </button>
+      <button class="home-nav-item" id="btnNavCourses">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18.5V6.8A2.8 2.8 0 016.8 4H20v14.5H6.8A2.8 2.8 0 004 21"/><path d="M8 8h8M8 12h6"/></svg>
+        <span>学习记录</span>
+      </button>
+    </nav>
+
+    <div class="home-side-spacer"></div>
+    <div class="local-status">
+      <b><i></i> 本地模式</b>
+      <span>视频与录音只在这台电脑处理，不上传。</span>
+    </div>
+    <button class="home-profile" id="btnProfile" title="打开我的学习空间">
+      <span class="profile-avatar">影</span>
+      <span class="home-profile-copy"><b>我的学习空间</b><em>记录自动保存在本机</em></span>
+    </button>
+  </aside>
+
+  <div class="welcome-inner">
+    <header class="home-topbar">
+      <div class="home-breadcrumb">影读英语 <span>/</span> 口语练习</div>
+      <div class="home-top-actions">
+        <span class="local-ready" id="homeAsrStatus"><i></i> 识别服务已就绪</span>
+        <button class="icon-btn home-settings" id="btnSettingsHome" title="配置 DeepSeek API Key" aria-label="设置">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6 1.65 1.65 0 0010 3.09V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9v.09a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <section class="home-intro">
+      <div>
+        <h1>今天，用一句话进入英语。</h1>
+        <p>从视频场景到真实对话，练习马上就能说出口的表达。</p>
+      </div>
+      <div class="daily-stat">
+        <span>TODAY</span>
+        <b>6 <em>分钟就够</em></b>
+      </div>
+    </section>
+
+    <section class="home-hero">
+      <div class="home-hero-copy">
+        <div class="hero-kicker"><b>SCENE 07</b><span>推荐场景</span></div>
+        <h2>下班前，<br>和同事聊两句。</h2>
+        <p>说计划 · 给理由 · 把话题抛回去</p>
+        <div class="hero-actions">
+          <button class="hero-primary" id="btnGoSpeaking">开始 2 分钟试练 <span>→</span></button>
+          <button class="hero-secondary" id="btnHeroScenes">换一个场景</button>
+        </div>
+      </div>
+      <div class="home-hero-visual">
+        <span class="hero-scene-tag">OFFICE SMALL TALK</span>
+        <div class="hero-caption">
+          <b>Got any plans for the weekend?</b>
+          <span>周末有什么安排吗？</span>
+        </div>
+        <div class="hero-audio">
+          <i class="hero-play">▶</i>
+          <span><em></em></span>
+          <small>2 MIN PRACTICE</small>
+        </div>
+      </div>
+    </section>
+
+    <div class="home-section-head">
+      <h2>接下来练什么</h2>
+      <div class="home-filter" role="group" aria-label="练习分类">
+        <button class="active" data-category="recommended" aria-pressed="true">推荐</button>
+        <button data-category="daily" aria-pressed="false">日常</button>
+        <button data-category="work" aria-pressed="false">职场</button>
+        <button data-category="film" aria-pressed="false">影视</button>
+      </div>
+    </div>
+
+    <div class="practice-grid">
+      <button class="practice-card quick-food" id="btnQuickFood" data-group="recommended daily">
+        <span class="practice-card-bg"></span>
+        <span class="practice-card-top"><em>生活英语</em><small>06 MIN</small></span>
+        <span class="practice-card-copy">
+          <b>不慌不忙地点一杯咖啡</b>
+          <i>“I'll have a flat white, please.”</i>
+          <small>5 个任务 · 入门</small>
+        </span>
+      </button>
+
+      <button class="practice-card quick-travel" id="btnQuickTravel" data-group="recommended daily">
+        <span class="practice-card-bg"></span>
+        <span class="practice-card-top"><em>旅行英语</em><small>10 MIN</small></span>
+        <span class="practice-card-copy">
+          <b>在陌生城市问清方向</b>
+          <i>问路、确认距离与交通</i>
+          <small>新练习 · 入门</small>
+        </span>
+      </button>
+
+      <button class="practice-card quick-work" id="btnQuickWork" data-group="work" hidden>
+        <span class="practice-card-bg"></span>
+        <span class="practice-card-top"><em>职场沟通</em><small>08 MIN</small></span>
+        <span class="practice-card-copy">
+          <b>用三句话说清工作进度</b>
+          <i>每天站会都能直接用的表达</i>
+          <small>进度、卡点、下一步</small>
+        </span>
+      </button>
+
+      <button class="practice-card quick-film" id="btnQuickFilm" data-group="film" hidden>
+        <span class="practice-card-bg"></span>
+        <span class="practice-card-top"><em>影视对白</em><small>自定义</small></span>
+        <span class="practice-card-copy">
+          <b>把喜欢的台词变成口语</b>
+          <i>导入一段视频，逐句跟读并复述</i>
+          <small>支持本地字幕与语音识别</small>
+        </span>
+      </button>
+
+      <div class="drop upload-card" id="dropZone" data-group="recommended daily work film">
+        <div class="upload-card-head">
+          <div class="drop-icon">＋</div>
+          <span>YOUR OWN MATERIAL</span>
+        </div>
+        <div class="drop-title">把一段视频<br>变成你的练习</div>
+        <div class="drop-sub">拖入视频，自动生成字幕、跟读和情景对答。</div>
+        <div class="drop-actions">
+          <button class="btn primary" id="btnPickVideo">选择视频</button>
+          <button class="btn" id="btnPickSub">添加字幕</button>
+        </div>
+        <div class="picked" id="pickedList"></div>
+        <div class="upload-foot"><span>MP4</span><span>MOV</span><span>+ SRT</span><em><i></i> 只在本地处理</em></div>
+      </div>
+    </div>
+
+    <div class="section-title recent-title" id="courseListTitle" hidden>最近课程</div>
+    <div class="course-list" id="courseList"></div>
+
+    <div class="import-options">
+      <div id="optSubBox">
+        <label class="switch">
+          <input type="checkbox" id="optOrganize" checked />
+          <span>AI 智能断句<span class="hint">（把被切成半句的字幕合并成完整句子，推荐）</span></span>
+        </label>
+        <label class="switch">
+          <input type="checkbox" id="optTranslate" checked />
+          <span>AI 生成中文字幕<span class="hint">（字幕没有中文时自动翻译）</span></span>
+        </label>
+      </div>
+
+      <div id="optAsrBox" hidden>
+        <div class="asr-line">
+          <span class="asr-label">识别精度</span>
+          <select id="selModel"></select>
+          <span class="asr-env" id="asrEnv"></span>
+        </div>
+        <p class="asr-tip" id="asrTip">首次使用需要下载模型（一次性，之后完全离线）。</p>
+        <label class="switch">
+          <input type="checkbox" id="optAsrTranslate" checked />
+          <span>识别后自动翻译成中文<span class="hint">（用 DeepSeek 生成中文字幕）</span></span>
+        </label>
+      </div>
+
+      <div class="import-actions">
+        <button class="btn primary" id="btnBuild" disabled>生成课程</button>
+        <span class="import-note" id="importNote"></span>
+      </div>
+    </div>
+
+    <div class="footnote">
+      核心音视频保留在本机 · 仅文本分析与朗读请求联网
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════ 学习记录 ══════════════════════ -->
+<div id="records" class="records" hidden>
+  <header class="topbar records-topbar">
+    <button class="icon-btn" id="btnRecordsBack" title="返回首页">
+      <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <div class="course-title">学习记录</div>
+    <div class="top-actions">
+      <select class="records-range" id="recordsRange" aria-label="记录时间范围">
+        <option value="7">近 7 天</option>
+        <option value="30">近 30 天</option>
+        <option value="0">全部记录</option>
+      </select>
+    </div>
+  </header>
+
+  <div class="records-content">
+    <section class="records-intro">
+      <div>
+        <span class="records-eyebrow">LEARNING JOURNAL</span>
+        <h1 id="recordsHeadline">你的学习记录</h1>
+        <p id="recordsSummary">正在整理课程、口语练习和收藏记录…</p>
+      </div>
+      <div class="records-streak">
+        <span>连续学习</span>
+        <b id="recordsStreak">0 <em>天</em></b>
+      </div>
+    </section>
+
+    <section class="records-stats" id="recordsStats"></section>
+
+    <div class="records-columns">
+      <section class="records-panel records-rhythm">
+        <div class="records-panel-head">
+          <div><b>近 7 天节奏</b><span>每天完成的练习与学习动作</span></div>
+        </div>
+        <div class="records-chart" id="recordsChart"></div>
+      </section>
+      <section class="records-panel records-focus">
+        <div class="records-panel-head">
+          <div><b>最近一次复盘</b><span>下一步最值得注意的地方</span></div>
+        </div>
+        <div id="recordsReview"></div>
+      </section>
+    </div>
+
+    <section class="records-panel records-history">
+      <div class="records-panel-head">
+        <div><b>学习足迹</b><span>点击记录可直接回到对应练习</span></div>
+        <button class="btn small" id="btnRecordsRefresh">刷新</button>
+      </div>
+      <div class="records-timeline" id="recordsTimeline"></div>
+    </section>
+  </div>
+</div>
+
+<!-- ══════════════════════ 学习界面 ══════════════════════ -->
+<div id="study" class="study" hidden>
+  <header class="topbar">
+    <button class="icon-btn" id="btnHome" title="返回课程列表">
+      <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <div class="course-title" id="courseTitle">—</div>
+    <div class="top-actions">
+      <button class="chip-btn" id="btnVocab" title="生词本">生词 <b id="vocabCount">0</b></button>
+      <button class="chip-btn" id="btnLib" title="表达库">表达 <b id="libCount2">0</b></button>
+      <button class="icon-btn" id="btnSettings" title="设置">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6 1.65 1.65 0 0010 3.09V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9v.09a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="video-shell" id="videoShell">
+    <video id="video" playsinline preload="metadata"></video>
+
+    <div class="video-placeholder" id="videoPlaceholder">
+      <div>
+        <p>还没有加载视频</p>
+        <button class="btn small" id="btnReloadVideo">选择视频文件</button>
+      </div>
+    </div>
+
+    <button class="stage-play" id="btnStagePlay" title="播放 / 暂停" aria-label="播放或暂停">
+      <svg viewBox="0 0 24 24" id="stageIcon"><path d="M8 4.8l11.4 7.2L8 19.2z" fill="currentColor" stroke="none"/></svg>
+    </button>
+
+    <div class="stage-bar" id="stageBar">
+      <span class="stage-time" id="stageTime">0:00</span>
+      <div class="vbar" id="vbar" title="点击跳到对应位置"><i id="vbarFill"></i></div>
+      <span class="stage-time" id="stageDur">0:00</span>
+    </div>
+  </div>
+
+  <div class="caption-bar" id="videoOverlay">
+    <div class="vo-text" id="voText"></div>
+    <div class="vo-zh" id="voZh"></div>
+  </div>
+
+  <nav class="modes" id="modes">
+    <button data-mode="intensive" class="on">精听</button>
+    <button data-mode="bilingual">双语</button>
+    <button data-mode="blind">盲听</button>
+    <button data-mode="shadow">跟读</button>
+    <button data-mode="dictation">听写</button>
+    <button data-mode="cloze">挖空</button>
+    <button class="more" id="btnMore" title="更多">···</button>
+  </nav>
+
+  <nav class="tabs" id="tabs">
+    <button data-tab="subs" class="on">字幕</button>
+    <button data-tab="expr">实用表达</button>
+    <button data-tab="dialog">对话迁移</button>
+    <button data-tab="practice">开口练</button>
+    <button data-tab="speaking" class="tab-go">实战口语 ›</button>
+  </nav>
+
+  <div class="subs" id="subs"></div>
+  <div class="pane" id="paneExpr" hidden></div>
+  <div class="pane" id="paneDialog" hidden></div>
+  <div class="pane" id="panePractice" hidden></div>
+
+  <footer class="dock">
+    <div class="dock-row wrap">
+      <button class="dock-btn" id="btnPrevCourse" title="上一课">上一课</button>
+      <button class="dock-btn" id="btnNextCourse" title="下一课">下一课</button>
+      <button class="dock-btn toggle" id="btnLoopAll" title="全片循环">全片循环</button>
+      <button class="dock-btn toggle" id="btnAuto" title="一句播完自动播下一句">连播</button>
+      <button class="dock-btn toggle" id="btnWordGloss" title="逐词显示中文释义">逐词</button>
+      <button class="dock-btn toggle" id="btnIpa" title="显示整句音标">音标</button>
+    </div>
+    <div class="dock-row">
+      <button class="dock-btn" id="btnRate" title="播放速度">1.0x</button>
+      <button class="dock-btn toggle" id="btnLoopOne" title="当前句循环">单句循环</button>
+      <button class="dock-btn toggle" id="btnAB" title="A-B 段落循环">AB 点</button>
+      <div class="transport">
+        <button class="icon-btn" id="btnPrev" title="上一句"><svg viewBox="0 0 24 24"><path d="M18 6l-9 6 9 6z" fill="currentColor" stroke="none"/><rect x="5" y="5" width="1.6" height="14" fill="currentColor" stroke="none"/></svg></button>
+        <button class="play-btn" id="btnPlay" title="播放 / 暂停"><svg viewBox="0 0 24 24" id="playIcon"><path d="M7 4l13 8-13 8z" fill="currentColor" stroke="none"/></svg></button>
+        <button class="icon-btn" id="btnNext" title="下一句"><svg viewBox="0 0 24 24"><path d="M6 6l9 6-9 6z" fill="currentColor" stroke="none"/><rect x="17.4" y="5" width="1.6" height="14" fill="currentColor" stroke="none"/></svg></button>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<!-- ══════════════════════ 口语实战（独立页面） ══════════════════════ -->
+<div id="speaking" class="speaking" hidden>
+  <header class="topbar">
+    <button class="icon-btn" id="btnSpeakBack" title="返回">
+      <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <div class="course-title" id="speakTitle">口语实战</div>
+    <div class="top-actions">
+      <button class="chip-btn" id="btnSpeakNew" title="换一个场景">换场景</button>
+    </div>
+  </header>
+  <div class="speaking-tools">
+    <label>声音
+      <select id="speakingVoice" aria-label="对话声音"></select>
+    </label>
+    <label>语速
+      <select id="speakingRate" aria-label="对话语速">
+        <option value="0.88">舒缓 0.88×</option>
+        <option value="1">自然 1.0×</option>
+        <option value="1.1">稍快 1.1×</option>
+      </select>
+    </label>
+    <span id="voiceEngineStatus"><i></i> 神经网络语音</span>
+  </div>
+  <div class="speak-body" id="speakBody"></div>
+</div>
+
+<!-- ══════════════════════ 设置面板 ══════════════════════ -->
+<div class="sheet-mask" id="maskSettings" hidden>
+  <div class="sheet">
+    <div class="sheet-head">
+      <h2>设置</h2>
+      <button class="icon-btn" data-close="maskSettings">✕</button>
+    </div>
+    <div class="sheet-body">
+      <label class="field">
+        <span>DeepSeek API Key</span>
+        <input type="password" id="inpKey" placeholder="sk-..." autocomplete="off" />
+        <em id="keyStatus" class="hint"></em>
+      </label>
+      <label class="field">
+        <span>接口地址</span>
+        <input type="text" id="inpBase" placeholder="https://api.deepseek.com" />
+      </label>
+      <label class="field">
+        <span>模型</span>
+        <input type="text" id="inpModel" placeholder="deepseek-chat" />
+      </label>
+      <button class="btn primary" id="btnSaveKey">保存</button>
+      <p class="hint">Key 只写入本机 <code>data/store.json</code>，用于后端代理调用，不会出现在网页源码里。</p>
+
+      <hr />
+      <label class="field">
+        <span>中文字幕显示速度</span>
+        <select id="selZhDelay">
+          <option value="0">跟随英文一起</option>
+          <option value="0.6">延后 0.6 秒</option>
+          <option value="1.2">延后 1.2 秒</option>
+        </select>
+      </label>
+      <label class="switch">
+        <input type="checkbox" id="optAutoScroll" checked />
+        <span>播放时自动滚动到当前句</span>
+      </label>
+      <label class="switch">
+        <input type="checkbox" id="optOverlayCaption" checked />
+        <span>在视频下方显示当前句</span>
+      </label>
+      <hr />
+      <div class="danger-row">
+        <button class="btn small" id="btnExportVocab">导出生词本 (CSV)</button>
+        <button class="btn small danger" id="btnDeleteCourse">删除当前课程</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════ 生词本 ══════════════════════ -->
+<div class="sheet-mask" id="maskVocab" hidden>
+  <div class="sheet sheet-right">
+    <div class="sheet-head">
+      <h2>生词本 <span class="hint" id="vocabMeta"></span></h2>
+      <button class="icon-btn" data-close="maskVocab">✕</button>
+    </div>
+    <div class="sheet-body" id="vocabBody"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════ 表达库 ══════════════════════ -->
+<div class="sheet-mask" id="maskLib" hidden>
+  <div class="sheet sheet-right">
+    <div class="sheet-head">
+      <h2>表达库 <span class="hint" id="libMeta"></span></h2>
+      <button class="icon-btn" data-close="maskLib">✕</button>
+    </div>
+    <div class="sheet-body" id="libBody"></div>
+  </div>
+</div>
+
+<div class="sheet-mask" id="maskProfile" hidden>
+  <div class="sheet profile-sheet">
+    <div class="sheet-head">
+      <h2>我的学习空间</h2>
+      <button class="icon-btn" data-close="maskProfile" title="关闭">✕</button>
+    </div>
+    <div class="sheet-body">
+      <div class="profile-hero">
+        <span class="profile-avatar large">影</span>
+        <div>
+          <b>本地学习档案</b>
+          <p>课程、口语和表达积累都保存在这台电脑上。</p>
+        </div>
+        <em><i></i> 本地模式</em>
+      </div>
+      <div class="profile-metrics" id="profileMetrics">
+        <div><span>视频课程</span><b>—</b></div>
+        <div><span>口语轮次</span><b>—</b></div>
+        <div><span>跟读记录</span><b>—</b></div>
+        <div><span>表达收藏</span><b>—</b></div>
+      </div>
+      <div class="profile-shortcuts">
+        <button class="profile-shortcut" id="btnProfileRecords">
+          <b>学习记录</b><span>查看节奏、复盘和历史</span><em>›</em>
+        </button>
+        <button class="profile-shortcut" id="btnProfileLibrary">
+          <b>表达本</b><span>整理已经收藏的表达</span><em>›</em>
+        </button>
+        <button class="profile-shortcut" id="btnProfileVocab">
+          <b>生词本</b><span>复习查询过的单词</span><em>›</em>
+        </button>
+        <button class="profile-shortcut" id="btnProfileSettings">
+          <b>模型与声音</b><span>配置 DeepSeek、语音和播放偏好</span><em>›</em>
+        </button>
+      </div>
+      <p class="profile-data-note">数据位置：<code>data/</code> · 备份时复制整个目录即可</p>
+    </div>
+  </div>
+</div>
+
+<!-- 单词卡浮层 -->
+<div class="pop" id="wordPop" hidden></div>
+
+<!-- 进度遮罩 -->
+<div class="busy" id="busy" hidden>
+  <div class="busy-card">
+    <div class="spinner"></div>
+    <div class="busy-text" id="busyText">处理中…</div>
+    <div class="busy-bar"><i id="busyBar"></i></div>
+    <button class="btn small" id="btnBusyCancel">取消</button>
+  </div>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+
+<input type="file" id="fileVideo" accept="video/*,audio/*,.mp4,.mkv,.webm,.mov,.m4a,.mp3,.wav,.flv" hidden />
+<input type="file" id="fileSub" accept=".srt,.vtt,.txt,text/plain" hidden />
+
+<script type="module" src="/js/app.js"></script>
+</body>
+</html>
